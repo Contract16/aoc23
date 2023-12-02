@@ -3,16 +3,16 @@ import 'dart:io';
 import 'package:aoc23/reader/file_reader.dart';
 import 'package:args/args.dart';
 
-const part = 'part';
+const _part = 'part';
 
 void main(List<String> arguments) {
   exitCode = 0;
-  final parser = ArgParser()..addOption(part, mandatory: true, abbr: 'p');
+  final parser = ArgParser()..addOption(_part, mandatory: true, abbr: 'p');
 
   ArgResults argResults = parser.parse(arguments);
   final paths = argResults.rest;
 
-  final p = int.parse(argResults[part]);
+  final p = int.parse(argResults[_part]);
 
   if (p == 1) {
     _part1(paths);

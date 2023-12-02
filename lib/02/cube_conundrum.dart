@@ -4,22 +4,32 @@ import 'dart:math';
 import 'package:aoc23/reader/file_reader.dart';
 import 'package:args/args.dart';
 
+const _part = 'part';
+
 void main(List<String> arguments) {
   exitCode = 0;
-  final parser = ArgParser()..addMultiOption('bag', abbr: 'b');
+  final parser = ArgParser()
+    ..addMultiOption('bag', abbr: 'b')
+    ..addOption(_part, mandatory: true, abbr: 'p');
 
   ArgResults argResults = parser.parse(arguments);
   final paths = argResults.rest;
-  final bag = argResults['bag'];
-  if (bag.isEmpty ||
-      bag.length != 3 ||
-      bag.any((c) => int.tryParse(c) == null)) {
-    stderr.writeln('Please provide 3 numbers');
-    exitCode = 1;
-    return;
-  }
 
-  _part1(paths, bag.map<int>((c) => int.parse(c)).toList());
+  final p = int.parse(argResults[_part]);
+
+  if (p == 1) {
+    final bag = argResults['bag'];
+    if (bag.isEmpty ||
+        bag.length != 3 ||
+        bag.any((c) => int.tryParse(c) == null)) {
+      stderr.writeln('Please provide 3 numbers');
+      exitCode = 1;
+      return;
+    }
+    _part1(paths, bag.map<int>((c) => int.parse(c)).toList());
+  } else {
+    _part2(paths);
+  }
 }
 
 void _part1(List<String> paths, List<int> bag) => FileReader.read(
@@ -59,6 +69,42 @@ void _part1(List<String> paths, List<int> bag) => FileReader.read(
                 int.tryParse(game?.group(0)?.split(' ').last ?? '') ?? 0;
             total += gameNumber;
           }
+        }
+        stdout.writeln(total);
+      },
+    );
+
+void _part2(List<String> paths) => FileReader.read(
+      paths: paths,
+      onFileOpened: (lines) async {
+        var colorsRegex = RegExp(
+          '\\d{1,}\\s(blue|red|green)',
+          caseSensitive: false,
+        );
+        int total = 0;
+        await for (final line in lines) {
+          int red = 0;
+          int green = 0;
+          int blue = 0;
+
+          final matches = colorsRegex.allMatches(line);
+
+          for (final match in matches) {
+            final split = match[0]?.split(' ') ?? [];
+            if (split.isEmpty) continue;
+
+            final amount = int.tryParse(split.first) ?? 0;
+            final color = split.last;
+            if (color == 'red') {
+              red = max(red, amount);
+            } else if (color == 'green') {
+              green = max(green, amount);
+            } else if (color == 'blue') {
+              blue = max(blue, amount);
+            }
+          }
+
+          total += red * green * blue;
         }
         stdout.writeln(total);
       },
