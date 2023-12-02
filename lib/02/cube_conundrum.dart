@@ -4,7 +4,13 @@ import 'dart:math';
 import 'package:aoc23/reader/file_reader.dart';
 import 'package:args/args.dart';
 
-const _part = 'part';
+final _part = 'part';
+
+final _gameRegex = RegExp('Game\\s\\d{1,}');
+final _colorsRegex = RegExp(
+  '\\d{1,}\\s(blue|red|green)',
+  caseSensitive: false,
+);
 
 void main(List<String> arguments) {
   exitCode = 0;
@@ -35,39 +41,13 @@ void main(List<String> arguments) {
 void _part1(List<String> paths, List<int> bag) => FileReader.read(
       paths: paths,
       onFileOpened: (lines) async {
-        var gameRegex = RegExp('Game\\s\\d{1,}');
-        var colorsRegex = RegExp(
-          '\\d{1,}\\s(blue|red|green)',
-          caseSensitive: false,
-        );
         int total = 0;
         await for (final line in lines) {
-          int red = 0;
-          int green = 0;
-          int blue = 0;
-
-          final matches = colorsRegex.allMatches(line);
-
-          for (final match in matches) {
-            final split = match[0]?.split(' ') ?? [];
-            if (split.isEmpty) continue;
-
-            final amount = int.tryParse(split.first) ?? 0;
-            final color = split.last;
-            if (color == 'red') {
-              red = max(red, amount);
-            } else if (color == 'green') {
-              green = max(green, amount);
-            } else if (color == 'blue') {
-              blue = max(blue, amount);
-            }
-          }
-
-          if (red <= bag[0] && green <= bag[1] && blue <= bag[2]) {
-            final game = gameRegex.firstMatch(line);
-            int gameNumber =
-                int.tryParse(game?.group(0)?.split(' ').last ?? '') ?? 0;
-            total += gameNumber;
+          final parsed = parse(line);
+          if (parsed.red <= bag[0] &&
+              parsed.green <= bag[1] &&
+              parsed.blue <= bag[2]) {
+            total += parsed.id;
           }
         }
         stdout.writeln(total);
@@ -77,35 +57,39 @@ void _part1(List<String> paths, List<int> bag) => FileReader.read(
 void _part2(List<String> paths) => FileReader.read(
       paths: paths,
       onFileOpened: (lines) async {
-        var colorsRegex = RegExp(
-          '\\d{1,}\\s(blue|red|green)',
-          caseSensitive: false,
-        );
         int total = 0;
         await for (final line in lines) {
-          int red = 0;
-          int green = 0;
-          int blue = 0;
+          final parsed = parse(line);
 
-          final matches = colorsRegex.allMatches(line);
-
-          for (final match in matches) {
-            final split = match[0]?.split(' ') ?? [];
-            if (split.isEmpty) continue;
-
-            final amount = int.tryParse(split.first) ?? 0;
-            final color = split.last;
-            if (color == 'red') {
-              red = max(red, amount);
-            } else if (color == 'green') {
-              green = max(green, amount);
-            } else if (color == 'blue') {
-              blue = max(blue, amount);
-            }
-          }
-
-          total += red * green * blue;
+          total += parsed.red * parsed.green * parsed.blue;
         }
         stdout.writeln(total);
       },
     );
+
+({int id, int red, int green, int blue}) parse(String line) {
+  int red = 0;
+  int green = 0;
+  int blue = 0;
+
+  final matches = _colorsRegex.allMatches(line);
+
+  for (final match in matches) {
+    final split = match[0]?.split(' ') ?? [];
+    if (split.isEmpty) continue;
+
+    final amount = int.tryParse(split.first) ?? 0;
+    final color = split.last;
+    if (color == 'red') {
+      red = max(red, amount);
+    } else if (color == 'green') {
+      green = max(green, amount);
+    } else if (color == 'blue') {
+      blue = max(blue, amount);
+    }
+  }
+  final game = _gameRegex.firstMatch(line);
+  int id = int.tryParse(game?.group(0)?.split(' ').last ?? '') ?? 0;
+
+  return (id: id, red: red, green: green, blue: blue);
+}
