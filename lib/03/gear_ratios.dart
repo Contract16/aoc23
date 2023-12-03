@@ -13,7 +13,13 @@ void main(List<String> arguments) {
   ArgResults argResults = parser.parse(arguments);
   final paths = argResults.rest;
 
-  _part1(paths);
+  final p = int.parse(argResults[_part]);
+
+  if (p == 1) {
+    _part1(paths);
+  } else {
+    _part2(paths);
+  }
 }
 
 void _part1(List<String> paths) => FileReader.read(
@@ -83,6 +89,82 @@ void _part1(List<String> paths) => FileReader.read(
 
             if (found) {
               total += fullNumber;
+            }
+          }
+        }
+
+        stdout.writeln('total: $total');
+      },
+    );
+
+void _part2(List<String> paths) => FileReader.read(
+      paths: paths,
+      onFileOpened: (lines) async {
+        List<List<String>> matrix = [];
+        matrix.addAll({await for (var line in lines) line.split('')});
+
+        final rows = matrix.length;
+        final columns = matrix.first.length;
+
+        int total = 0;
+        for (int y = 0; y < rows; y++) {
+          for (int x = 0; x < rows; x++) {
+            final char = matrix[y][x];
+
+            int? parsedNum = int.tryParse(char);
+
+            if (parsedNum == null && char == '.') {
+              continue;
+            }
+
+            int startY = max(y - 1, 0);
+            int toY = min(y + 1, rows - 1);
+
+            int startX = max(x - 1, 0);
+            int toX = min(x + 1, columns - 1);
+
+            List<String> adjacentNumbers = [];
+
+            int currentY = startY;
+            while (currentY <= toY) {
+              int currentX = startX;
+              while (currentX <= toX) {
+                if (currentY == y && currentX == x) {
+                  currentX++;
+                  continue;
+                }
+
+                final adjacentChar = matrix[currentY][currentX];
+                final parsedAdjacentNum = int.tryParse(adjacentChar);
+                if (parsedAdjacentNum != null) {
+                  StringBuffer fullNumberBuilder = StringBuffer();
+
+                  int numStart = currentX;
+                  while (numStart >= 0 &&
+                      int.tryParse(matrix[currentY][numStart]) != null) {
+                    numStart--;
+                  }
+
+                  int numEnd = currentX;
+                  while (numEnd < columns &&
+                      int.tryParse(matrix[currentY][numEnd]) != null) {
+                    numEnd++;
+                  }
+                  fullNumberBuilder.write(
+                      matrix[currentY].sublist(numStart + 1, numEnd).join(''));
+
+                  adjacentNumbers.add(fullNumberBuilder.toString());
+                  currentX = numEnd;
+                }
+                currentX++;
+              }
+              currentY++;
+            }
+
+            if (adjacentNumbers.length == 2) {
+              total += adjacentNumbers
+                  .map((e) => int.parse(e))
+                  .reduce((a, b) => a * b);
             }
           }
         }
